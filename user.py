@@ -1,7 +1,8 @@
+from folders import Quiz, Response
 
 
 class User:
-	
+
 	def __init__(self, name: str):
 		self._name = name
 		self._score = 0.0
@@ -20,6 +21,10 @@ class User:
 
 	def increase_score(self, value: float):
 		self._score += value
+
+	def answer(self, quiz: Quiz, response_string: str):
+		response = Response(response_string.strip())
+		quiz.add(response)
 
 	def __str__(self) -> str:
 		return (

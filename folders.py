@@ -1,41 +1,138 @@
+import re
 import os
+from typing import List, Tuple
 
 
-class Quiz:
+class Question:
 
-	def __init__(self,
-							 question: str,
-							 answer: str,
-							 answers_count: int = None,
-							 ordered: bool = False):
-
-		self._question = question
-		self._answer = answer
-		self._answers_count = answers_count
-		self._ordered = ordered
-
-		self._scores = []
-		self._answers = []
-		self._answered = []
-		self._completed = False
-
-		if answers_count == 1:
-			self._scores = [1.0]
-			self._answers = [answer]
+	def __init__(self, content: str):
+		self._content = content
 
 	@property
-	def completed(self) -> bool:
-		return self._completed
-	
+	def content(self) -> str:
+		return self._content
+
+	def __str__(self) -> str:
+		return self._content
+
+
+class Response:
+
+	def __init__(self, content: str):
+		self._content = content
+
+	@property
+	def content(self) -> str:
+		return self._content
+
+	def __eq__(self, response: 'Response') -> bool:
+		""" If the content text of this response is equal to
+				the content text of another response then we return
+				True, otherwise, False will be returned.
+		"""
+		# print()
+		# print(self._content)
+		# print(response.content)
+		# print(self._content == response.content)
+		return self._content == response.content
+
+	def __str__(self) -> str:
+		return self._content
+
+
+class ResponsesList:
+
+	def __init__(self,
+							string: str = '',
+							responses_list: List[str] = [],
+							ordered: bool = False):
+		self._responses = []
+		self._ordered = ordered
+
+		responses = []
+		if string:
+			responses = re.split('\n\n+', string)
+		elif responses_list:
+			responses = responses_list
+
+		for response in responses:
+			response = response.replace('\n', ' ')
+			response = response.strip()
+			self._responses.append(Response(response))
+
 	@property
 	def ordered(self) -> bool:
 		return self._ordered
 
-	def __len__(self) -> int:
-		return len(self._answers)
+	def __len__(self):
+		return len(self._responses)
+
+	def __contains__(self, response: Response):
+		return response in self._responses
+
+	def __getitem__(self, index: int) -> Response:
+		return self._responses[index]
+
+	def items(self) -> List[Response]:
+		return self._responses
 
 	def __str__(self) -> str:
-		return self._question
+		response_string = ''
+		for index, response in enumerate(self._responses):
+			if self._ordered:
+				response_string += f"{index + 1}. "
+			else:
+				response_string += "* "
+
+			response_string += f"{response}\n"
+
+		return response_string
+
+
+class Quiz:
+
+	def __init__(self, question: Question, nb_responses: int):
+
+		self._question = question
+		self._nb_responses = nb_responses
+
+		self._responses = []
+		self._score = 0.0
+
+	@property
+	def completed(self) -> bool:
+		return self._completed
+
+	@property
+	def score(self) -> float:
+		return self._score
+
+	@property
+	def accuracy_score(self) -> float:
+		return self._score * 100.0 / self._nb_responses
+
+	@property
+	def responses(self) -> List[str]:
+		return self._responses
+
+	@property
+	def completed(self) -> bool:
+		""" Returns True, if all the questions
+				of this quiz have a response. ie the length
+				of responses list is equal to total number 
+				of responses expected.
+		"""
+		return len(self._responses) == self._nb_responses
+
+	def increase_score(self, value: float):
+		self._score += value
+
+	def add(self, response: Response):
+		if not self.completed:
+			self._responses.append(response)
+
+	def __str__(self) -> str:
+		return f"\033[92m{self._question}\033[0m"
 
 
 class Paper:
@@ -46,15 +143,15 @@ class Paper:
 				f"This file is not found at this path: {file_path}"
 			)
 
-		self.content = ''
+		self._content = ''
 		with open(file_path, 'r', encoding='utf-8') as file:
 			self._content = file.read()
 
 		self._questions = []
-		self._answers = []
+		self._responses = []
 		self._parse_file()
 
-		if len(self._questions) != len(self._answers):
+		if len(self._questions) != len(self._responses):
 			raise ValueError(
 				f"Some questions have not answer."
 			)
@@ -75,27 +172,23 @@ class Paper:
 			if character == '[':
 				if isquestion:
 					isquestion = False
-					self._questions.append(question.strip())
+					self._questions.append(Question(question.strip()))
 					question = ''
 
 				if isanswer:
 					isanswer = False
-					self._answers.append(answer.strip())
+					self._responses.append(ResponsesList(answer.strip()))
 					answer = ''
 
 				continue
 
-			if not isquestion and not isanswer:
-				token += character
-				continue
-
 			if character == ']':
-				token = ''
 				if token.upper() == 'QUESTION':
 					isquestion = True
-				elif token.upper() == 'ANSWER':
+				elif token.upper() == 'RESPONSES':
 					isanswer = True
 
+				token = ''
 				continue
 
 			if isquestion:
@@ -104,18 +197,30 @@ class Paper:
 			if isanswer:
 				answer += character
 
+			if not isquestion and not isanswer:
+				token += character
+
+		if answer != '':
+			self._responses.append(ResponsesList(answer.strip()))
+
 	def __len__(self) -> int:
 		return len(self._questions)
 
-	def __getitem__(self, index) -> Quiz:
-		return Quiz(question=self._questions[index], answer=self._answers[index])
+	def __getitem__(self, index) -> Tuple[Question, ResponsesList]:
+		return self._questions[index], self._responses[index]
 
 	def __str__(self) -> str:
-		questions = ""
-		for index, question in enumerate(self._questions):
-			questions += str(index + 1) + ". " + question + "\n"
+		content = ""
+		paper_content = zip(self._questions, self._responses)
+		for index, (question, response) in enumerate(paper_content):
+			content += "\033[94m"
+			content += "Q" + str(index + 1) + ": " + str(question) + "\n"
+			content += "\033[93m"
+			content += "R" + str(index + 1) + ":\n" \
+				+ str(response) + '\n'
+			content += "\033[0m"
 
-		return questions
+		return content
 
 
 class Folder:
@@ -128,6 +233,11 @@ class Folder:
 
 		self._dir_path = dir_path
 		self._file_names = os.listdir(dir_path)
+		_, self._name = os.path.split(dir_path)
+
+	@property
+	def name(self) -> str:
+		return self._name
 
 	def __len__(self) -> int:
 		return len(self._file_names)
@@ -135,3 +245,6 @@ class Folder:
 	def __getitem__(self, index) -> Paper:
 		file_path = os.path.join(self._dir_path, self._file_names[index])
 		return Paper(file_path)
+
+	def __str__(self) -> str:
+		return self._name
