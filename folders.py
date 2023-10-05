@@ -1,5 +1,6 @@
 import re
 import os
+import random
 from typing import List, Tuple
 
 
@@ -202,6 +203,22 @@ class Paper:
 
 		if answer != '':
 			self._responses.append(ResponsesList(answer.strip()))
+
+	def shuffle(self):
+		index_list = list(range(len(self._questions)))
+		if index_list:
+			random.shuffle(index_list)
+			questions = []
+			responses = []
+			for index in index_list:
+				questions.append(self._questions[index])
+				responses.append(self._responses[index])
+
+			self._questions.clear()
+			self._responses.clear()
+
+			self._questions.extend(questions)
+			self._responses.extend(responses)
 
 	def __len__(self) -> int:
 		return len(self._questions)

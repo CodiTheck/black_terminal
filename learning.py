@@ -22,6 +22,8 @@ class Learning(Strategy):
 			Console.clear()
 			paper = folder[index]
 
+			paper.shuffle()
+
 			Console.print_message(f"{paper}\n")
 			Console.make_new_line()
 
