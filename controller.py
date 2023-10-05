@@ -89,6 +89,7 @@ class Corrector:
 								true_response.content,
 							)
 							quiz.increase_score(score)
+							responses_already_seen.append(given_response)
 
 	def _get_string_analysis(self, string1: str, string2: str) -> str:
 		string_length1 = len(string1)
