@@ -40,7 +40,7 @@ class Learning(Strategy):
 					f"\t \033[4mFolder:\033[0m \033[93m{folder.name.upper()}\033[0m\n"
 				)
 				Console.print_message(
-					f"\t \033[4mPaper:\033[0m \033[93m{paper.name.upper()}\033[0m\n"
+					f"\t \033[4mPaper: \033[0m \033[93m{paper.name.upper()}\033[0m\n"
 				)
 				Console.make_new_line()
 
@@ -57,6 +57,7 @@ class Learning(Strategy):
 				while not quiz.completed:
 					response = self._scan_response()
 					user.answer(quiz, response)
+					user.increase_expected(1.0)
 
 				corrector.correct(quiz)
 				user.increase_score(quiz.score)
