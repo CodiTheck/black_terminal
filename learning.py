@@ -3,6 +3,7 @@ from user import User
 from folders import Folder, Quiz
 from controller import Corrector
 from console import Console
+from utils import inputf
 
 
 class Learning(Strategy):
@@ -11,10 +12,14 @@ class Learning(Strategy):
 		print("\033[97m", end='')
 		string = input(" >_ ")
 		print("\033[0m", end='')
+		# string = inputf()
 		return string
 
 	def _wait_user_press_enter(self):
 		return input(" Press only [ENTER] to start the quiz... ")
+
+	def _ask_user(self, message: str) -> str:
+		return input(message)
 
 	def run(self, user: User, folder: Folder):
 		Console.clear()
