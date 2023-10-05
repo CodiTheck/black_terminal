@@ -8,9 +8,9 @@ from console import Console
 class Learning(Strategy):
 
 	def _scan_response(self) -> str:
-		print("\033[97m")
+		print("\033[97m", end='')
 		string = input(">_ ")
-		print("\033[0m")
+		print("\033[0m", end='')
 		return string
 
 	def _wait_user_press_enter(self):
@@ -63,7 +63,7 @@ class Learning(Strategy):
 
 				Console.make_new_line()
 				Console.print_message(
-					f"You optained {quiz.accuracy_score:.2f} %\n"
+					f"You optained \033[5m{quiz.accuracy_score:.2f} \033[0m%\n"
 				)
 
 				character = self._wait_user_press_enter()

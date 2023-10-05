@@ -30,6 +30,6 @@ class User:
 		return (
 			"\033[97m"
 			f"\t | user name: {self._name}\n"
-			f"\t | score:     {self._score:.2f}\n"
+			f"\t | score:     \033[5m{self._score:.2f}\n"
 			"\033[0m"
 		)
