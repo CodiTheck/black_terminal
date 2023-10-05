@@ -9,12 +9,12 @@ class Learning(Strategy):
 
 	def _scan_response(self) -> str:
 		print("\033[97m", end='')
-		string = input(">_ ")
+		string = input(" >_ ")
 		print("\033[0m", end='')
 		return string
 
 	def _wait_user_press_enter(self):
-		return input("Press only [ENTER] to start the quiz... ")
+		return input(" Press only [ENTER] to start the quiz... ")
 
 	def run(self, user: User, folder: Folder):
 		Console.clear()
@@ -48,11 +48,11 @@ class Learning(Strategy):
 				corrector.true_responses = true_responses
 
 				quiz = Quiz(question, nb_responses=len(true_responses))
-				Console.print_message("\033[4mQUESTION:\033[0m\n")
+				Console.print_message(" \033[4mQUESTION:\033[0m\n")
 				Console.print_message(f"\033[94m{question}\033[0m\n")
 				Console.make_new_line()
 
-				Console.print_message("\033[97m\033[4mYour responses:\033[0m\n")
+				Console.print_message("\033[97m \033[4mYour responses:\033[0m\n")
 
 				while not quiz.completed:
 					response = self._scan_response()
@@ -64,18 +64,20 @@ class Learning(Strategy):
 
 				if quiz.accuracy_score < 100.0:
 					Console.make_new_line()
-					Console.print_message("\033[92m\033[4mANALYSIS\033[0m\n")
+					Console.print_message("\033[92m \033[4mANALYSIS\033[0m\n")
 					Console.print_message(corrector.get_analyse(quiz))
 
 					Console.make_new_line()
-					Console.print_message("\033[93m\033[4mTRUE RESPONSES\033[0m\n")
+					Console.print_message("\033[93m \033[4mTRUE RESPONSES\033[0m\n")
 					Console.print_message(f"\033[93m{true_responses}\033[0m")
 				else:
-					Console.print_message(f"\033[92mCongratulation {user.name}!\033[0m\n")
+					Console.print_message(
+						f"\033[92m Congratulation {user.name}!\033[0m\n"
+					)
 
 				Console.make_new_line()
 				Console.print_message(
-					f"You optained \033[5m{quiz.accuracy_score:.2f} \033[0m%\n"
+					f" You optained \033[5m{quiz.accuracy_score:.2f} \033[0m%\n"
 				)
 
 				character = self._wait_user_press_enter()
