@@ -8,7 +8,9 @@ from console import Console
 class Learning(Strategy):
 
 	def _scan_response(self) -> str:
+		print("\033[97m")
 		string = input(">_ ")
+		print("\033[0m")
 		return string
 
 	def _wait_user_press_enter(self):

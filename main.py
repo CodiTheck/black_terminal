@@ -23,9 +23,11 @@ class App:
 		return User("Dr Mokira")
 
 	def show_welcome_message(self):
+		Console.print_message("\033[92m")
 		Console.print_message("+==============================================+\n")
-		Console.print_message("|           WELCONE IN CODE LEARNING           |\n")
+		Console.print_message("|           WELCONE IN BLACK TERMINAL          |\n")
 		Console.print_message("+==============================================+\n")
+		Console.print_message("\033[0m")
 		Console.make_new_line()
 
 	def show_options(self):
@@ -34,6 +36,9 @@ class App:
 		Console.print_message("\t - Enter [t] To test my skils;\n")
 		Console.print_message("\t + Enter [q] To exit.\n")
 		Console.make_new_line()
+
+	def show(self, obj):
+		Console.print_message(f"{obj}\n")
 
 	def scan_option(self) -> int:
 		option = ''
@@ -63,6 +68,7 @@ class App:
 		while True:
 			Console.clear()
 			self.show_welcome_message()
+			self.show(user)
 			self.show_options()
 
 			selected_option = self.scan_option()

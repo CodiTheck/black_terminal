@@ -28,6 +28,8 @@ class User:
 
 	def __str__(self) -> str:
 		return (
-			f"user name: {self._name}\n"
-			f"score:     {self._score:.2f}\n"
+			"\033[97m"
+			f"\t | user name: {self._name}\n"
+			f"\t | score:     {self._score:.2f}\n"
+			"\033[0m"
 		)
