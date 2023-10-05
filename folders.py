@@ -144,6 +144,7 @@ class Paper:
 				f"This file is not found at this path: {file_path}"
 			)
 
+		_, self._name = os.path.split(file_path)
 		self._content = ''
 		with open(file_path, 'r', encoding='utf-8') as file:
 			self._content = file.read()
@@ -156,6 +157,10 @@ class Paper:
 			raise ValueError(
 				f"Some questions have not answer."
 			)
+
+	@property
+	def name(self) -> str:
+		return self._name
 
 	@property
 	def content(self) -> str:

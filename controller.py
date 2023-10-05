@@ -31,39 +31,10 @@ class Corrector:
 		for index, score in enumerate(scores):
 			self.define_score(score, at=index)
 
-	def correct(self, quiz: Quiz):
-		if self._responses_ordered:
-			given_and_true = zip(quiz.responses, self._responses)
-			for index, (given_response, true_response) in enumerate(given_and_true):
-				if given_response == true_response:
-					quiz.increase_score(self._scores[index])
-		else:
-			responses_already_seen = []
-			for given_response in quiz.responses:
-				if given_response not in responses_already_seen \
-					and given_response in self._responses:
-
-					index = self._responses.index(given_response)
-					quiz.increase_score(1.0)
-					responses_already_seen.append(given_response)
-	
-	def _get_string_analysis(self, string1: str, string2: str) -> str:
-		string_length1 = len(string1)
-		string_length2 = len(string2)
-		result = ''
-
-		for character1, character2 in zip(string1, string2):
-			if character1 == character2:
-				result += f"\033[92m{character1}\033[0m"
-			else:
-				result += f"\033[91m{character2}\033[0m"
-
-		return result
-	
 	def _compare_score(self, string1: str, string2: str) -> float:
 		string_length1 = len(string1)
 		string_length2 = len(string2)
-		min_length = string_length1 if string_length1 < string_length2 \
+		max_length = string_length1 if string_length1 > string_length2 \
 			else string_length2
 
 		score = 0
@@ -71,8 +42,8 @@ class Corrector:
 			if character1 == character2:
 				score += 1
 
-		if min_length != 0.0:
-			return score * 100.0 / min_length
+		if max_length != 0.0:
+			return score / max_length
 		else:
 			return 0.0
 
@@ -88,6 +59,49 @@ class Corrector:
 				index_candidate = index
 
 		return index_candidate
+
+	def correct(self, quiz: Quiz):
+		if self._responses_ordered:
+			given_and_true = zip(quiz.responses, self._responses)
+			for index, (given_response, true_response) in enumerate(given_and_true):
+				if given_response == true_response:
+					quiz.increase_score(1.0)
+				else:
+					quiz.increase_score(
+						self._compare_score(
+							given_response.content,
+							true_response.content,
+						)
+					)
+		else:
+			responses_already_seen = []
+			for given_response in quiz.responses:
+				if given_response not in responses_already_seen:
+					if given_response in self._responses:
+						quiz.increase_score(1.0)
+						responses_already_seen.append(given_response)
+					else:
+						index = self._find_true_response(given_response)
+						if index is not None:
+							true_response = self._responses[index]
+							score = self._compare_score(
+								given_response.content,
+								true_response.content,
+							)
+							quiz.increase_score(score)
+
+	def _get_string_analysis(self, string1: str, string2: str) -> str:
+		string_length1 = len(string1)
+		string_length2 = len(string2)
+		result = ''
+
+		for character1, character2 in zip(string1, string2):
+			if character1 == character2:
+				result += f"\033[92m{character1}\033[0m"
+			else:
+				result += f"\033[91m{character2}\033[0m"
+
+		return result
 
 	def get_analyse(self, quiz) -> str:
 		result = ''
