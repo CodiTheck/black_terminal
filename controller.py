@@ -71,8 +71,11 @@ class Corrector:
 			if character1 == character2:
 				score += 1
 
-		return score * 100.0 / min_length
-	
+		if min_length != 0.0:
+			return score * 100.0 / min_length
+		else:
+			return 0.0
+
 	def _find_true_response(self, response: str) -> int:
 		max_score = self._compare_score(self._responses[0].content, response.content)
 		index_candidate = None if max_score == 0.0 else 0
@@ -123,9 +126,14 @@ class Corrector:
 							given_response.content,
 						) + "\n"
 					else:
-						result += "\033[91m"
-						result += "* " + str(given_response) + "\n"
-						result += "\033[0m"
+						if given_response.content:
+							result += "\033[91m"
+							result += "* " + str(given_response) + "\n"
+							result += "\033[0m"
+						else:
+							result += "\033[95m"
+							result += "You didn't answer!\n"
+							result += "\033[0m"
 
 			return result
 

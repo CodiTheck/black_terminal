@@ -52,8 +52,10 @@ class Learning(Strategy):
 
 				if quiz.accuracy_score < 100.0:
 					Console.make_new_line()
-					# Console.print_message(f"\033[93m{true_responses}\033[0m")
 					Console.print_message(corrector.get_analyse(quiz))
+
+					Console.make_new_line()
+					Console.print_message(f"\033[93m{true_responses}\033[0m")
 				else:
 					Console.print_message(f"\033[92mCongratulation {user.name}!\033[0m\n")
 

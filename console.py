@@ -3,7 +3,7 @@ import time
 
 
 class Console:
-	DELAY = 0.005
+	DELAY = 0.003
 
 	@classmethod
 	def clear(cls):
