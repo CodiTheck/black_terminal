@@ -1,4 +1,5 @@
 import os
+from typing import Any, List
 
 
 def inputf(file_name: str = '.input.txt', editor_name: str = 'nano') -> str:
