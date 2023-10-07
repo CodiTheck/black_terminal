@@ -1,3 +1,4 @@
+import math
 from dataclasses import dataclass
 from typing import List, Dict, Tuple, Any
 # from collections import Counter
@@ -5,19 +6,35 @@ from typing import List, Dict, Tuple, Any
 
 class PositionalEncoding:
 
-	def __init__(self):
-		self._pe = []
+	def __init__(self, max_length: int):
+		self._max_length = max_length
+		self._pe = [0] * max_length
 
-	def predict(self, sequence: List[Any]) -> List[int]:
-		tokens = []
-		for word in sequence:
-			try:
-				index = self._tokens.index(word)
-				tokens.append(index)
-			except ValueError:
-				tokens.append(-1)
-		
-		return tokens
+		pos = list(range(max_length))
+		e2i = math.exp(-1 * math.log(10_000.0))
+
+		alpha = self._mul(e2i, pos)
+		pesin = self._apply(math.sin, alpha)
+		pecos = self._apply(math.cos, alpha)
+
+		for index in range(0, max_length, 2):
+			self._pe[index] = pesin[index]
+
+		for index in range(1, max_length, 2):
+			self._pe[index] = pecos[index]
+
+	def _mul(self, a: float, v: list) -> list:
+		return [a*x for x in v]
+
+	def _apply(self, f, v: list) -> list:
+		return [f(x) for x in v]
+
+	def predict(self, sequence: List[int]) -> List[float]:
+		seq_length = len(sequence)
+		if seq_length >= self._max_length:
+			raise ValueError("Sequence in of max length.")
+
+		return [self._pe[pos] + sequence[pos] for pos in range(seq_length)]
 
 
 class SequenceAnalyser:
@@ -67,3 +84,15 @@ class SequenceAnalyser:
 				result[pos_token] = []
 
 			result[pos_token].append(analysis)
+
+
+def test():
+	pe = PositionalEncoding(10000)
+	seq = list(range(100)) + list(range(100))
+	seq_enc = pe.predict(seq)
+	print(seq_enc)
+	print(len(seq_enc) == len(set(seq_enc)))
+
+
+if __name__ == '__main__':
+	test()
