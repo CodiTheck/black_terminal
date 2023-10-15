@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from typing import List, Dict, Tuple, Any
 # from collections import Counter
 
-
+'''
 class PositionalEncoding:
 
 	def __init__(self, max_length: int):
@@ -35,63 +35,110 @@ class PositionalEncoding:
 			raise ValueError("Sequence in of max length.")
 
 		return [self._pe[pos] + sequence[pos] for pos in range(seq_length)]
+'''
+
+
+class Sequence:
+
+	@dataclass
+	class Occurrence:
+		value: Any
+		number: int
+
+	def __init__(self, seq: List[Any]):
+		self._sequence = []
+		self._numbers = []
+		self._counts = {}
+
+		for x in seq:
+			self._sequence.append(x)
+			if x in self._counts:
+				self._counts[x] += 1
+				self._numbers.append(self._counts[x])
+			else:
+				self._counts[x] = 1
+				self._numbers.append(1)
+
+	def indexof(self, occ: Occurrence) -> int:
+		if occ.value not in self._counts:
+			return -1
+
+		number = self._counts[occ.value]
+		if number == 1:
+			return self._sequence.index(occ.value)
+		else:
+			for index, (value, number) in enumerate(zip(self._sequence,
+																							    self._numbers)):
+				if occ.value == value and occ.number == number:
+					return index
+
+		return -1
+
+	def __len__(self) -> int:
+		return len(self._sequence)
+
+	def __getitem__(self, index: int) -> Occurrence:
+		occ = self.Occurrence(None, -1)
+		occ.value = self._sequence[index]
+		occ.number = self._numbers[index]
+		return occ
 
 
 class SequenceAnalyser:
 	""" Sequence Analyser """
 
-	@dataclass
-	class TokenAnalysis:
-		predicted_position: int
-		target_position: int
-		verified_position: bool
+	def _is_ordered(self, seq: List[Any]) -> bool:
+		current_value = seq[0]
+		for i in range(1, len(seq)):
+			if current_value >= seq[i]:
+				return False
 
-	# def _punctuation_tokenize(self, string: str) -> List[str]:
-	# 	""" Return a list of string tokined with punctuation tokenization method."""
-	# 	return string.split(' ')
+			current_value = seq[i]
 
-	def _sequence_identify(self,
-												 sequence1: List[Any],
-												 sequence2: List[Any]) -> Dict[int, str]:
-		sequence_dict = {pos:element for pos, element in enumerate(sequence1)}
-		for element in sequence2:
-			sequence_dict[len(sequence_dict)] = element
-
-		return sequence_dict
+		return True
 
 	def get_analysis(self,
 									 pred_tokens: List[Any],
-									 target_tokens: List[Any]) -> Dict[Any, TokenAnalysis]:
+									 targ_tokens: List[Any]) -> List[int]:
 
-		result = {}
-		pred_pos = -1
-		for target_pos, pos_token in enumerate(target_tokens):
-			analysis = self.TokenAnalysis()
-			try:
-				pred_pos = pred_tokens.index(pos_token)
-			except ValueError:
-				analysis.predicted_position = -1
-				analysis.target_position = target_pos
-				analysis.verified_position = False
+		pred_len = len(pred_tokens)
+		targ_len = len(targ_tokens)
 
-			if pred_pos == target_pos:
-				result[pos_token].append((-1, target_pos, False))
-				analysis.predicted_position = pred_pos
-				analysis.target_position = target_pos
-				analysis.verified_position = True
+		pred_seq = Sequence(pred_tokens)
+		targ_seq = Sequence(targ_tokens)
 
-			if pos_token not in result:
-				result[pos_token] = []
+		pred_positions = []
+		targ_positions = []
+		pos = -1
 
-			result[pos_token].append(analysis)
+		for index in range(targ_len):
+			occ = targ_seq[index]
+			pos = pred_seq.indexof(occ)
+			if pos != -1:
+				pred_positions.append(pos)
+				targ_positions.append(index)
+
+		corr_positions = sorted(pred_positions)
+
+		results = [-1]*targ_len
+		index = 0
+		for targ_index in range(targ_len):
+			if targ_index in targ_positions:
+				index = targ_positions.index(targ_index)
+				if pred_positions[index] == corr_positions[index]:
+					results[targ_index] = 1
+				else:
+					results[targ_index] = 0
+
+		return results
 
 
 def test():
-	pe = PositionalEncoding(10000)
-	seq = list(range(100)) + list(range(100))
-	seq_enc = pe.predict(seq)
-	print(seq_enc)
-	print(len(seq_enc) == len(set(seq_enc)))
+	targ_seq = [0, 2, 1, 1, 9, 2, 0, 2]
+	pred_seq = [0, 3, 2, 2, 1, 0, 3]
+	analyser = SequenceAnalyser()
+	res = analyser.get_analysis(pred_seq, targ_seq)
+	print(res)
 
 
 if __name__ == '__main__':

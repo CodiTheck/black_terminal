@@ -4,19 +4,25 @@ class ScoringStringCompare:
 	""" Token compare. """
 
 	def __init__(self):
+		# self._min = min_chars
 		pass
 
-	def compare(self, string1: str , string2: str) -> float:
+	def compare(self, pred: str , targ: str) -> float:
 		""" Compare function of two string. """
-		string_length1 = len(string1)
-		string_length2 = len(string2)
-		max_length = string_length1 if string_length1 > string_length2 \
-			else string_length2
+		pred_len = len(pred)
+		targ_len = len(targ)
+		max_length = pred_len if pred_len > targ_len \
+			else targ_len
 
+		substr = targ
 		score = 0.0
-		for character1, character2 in zip(string1, string2):
-			if character1 == character2:
-				score += 1
+		while substr != '':
+			try:
+				pred.index(substr)
+				score = float(len(substr))
+				break
+			except ValueError:
+				substr = substr[:-1]
 
 		if max_length != 0.0:
 			return score / max_length
