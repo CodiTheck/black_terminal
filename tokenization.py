@@ -64,7 +64,7 @@ class Str2IntEncoder(Tokenizer):
 def main():
 	try:
 		true_response = "Un pointeur est une variable qui permet de stocker l'adresse mémoire d'une autre variable."
-		given_response = "Un pointeur est une variable qui stocke l'adresse d'autres variables"
+		given_response = "Un pointeur est une viol qui stocke l'adresse d'autres variables"
 
 		tokenizer = StringTokenizer()
 		tokens1 = tokenizer.tokenize(true_response)

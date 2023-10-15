@@ -63,14 +63,14 @@ class Sequence:
 		if occ.value not in self._counts:
 			return -1
 
-		number = self._counts[occ.value]
-		if number == 1:
-			return self._sequence.index(occ.value)
-		else:
-			for index, (value, number) in enumerate(zip(self._sequence,
-																							    self._numbers)):
-				if occ.value == value and occ.number == number:
-					return index
+		# number = self._counts[occ.value]
+		# if number == 1:
+		# 	return self._sequence.index(occ.value)
+		# else:
+		for index, (value, number) in enumerate(zip(self._sequence,
+																								self._numbers)):
+			if occ.value == value and occ.number == number:
+				return index
 
 		return -1
 
@@ -107,38 +107,52 @@ class SequenceAnalyser:
 		pred_seq = Sequence(pred_tokens)
 		targ_seq = Sequence(targ_tokens)
 
-		pred_positions = []
-		targ_positions = []
+		results = []
+		matching = []
 		pos = -1
+		max_pos = -1
 
-		for index in range(targ_len):
-			occ = targ_seq[index]
-			pos = pred_seq.indexof(occ)
+		for index in range(pred_len):
+			pred = pred_seq[index]
+			pos = targ_seq.indexof(pred)
 			if pos != -1:
-				pred_positions.append(pos)
-				targ_positions.append(index)
-
-		corr_positions = sorted(pred_positions)
-
-		results = [-1]*targ_len
-		index = 0
-		for targ_index in range(targ_len):
-			if targ_index in targ_positions:
-				index = targ_positions.index(targ_index)
-				if pred_positions[index] == corr_positions[index]:
-					results[targ_index] = 1
+				if pos > max_pos:
+					results.append(1)
+					max_pos = pos
 				else:
-					results[targ_index] = 0
+					results.append(0)
 
-		return results
+				matching.append(pos)
+			else:
+				results.append(-2)
+				matching.append(-2)
+
+		# print(matching)
+		for targ_index in range(targ_len):
+			if targ_index not in matching:
+				pos = -1
+				for index, targ_position in enumerate(matching):
+					if targ_position > targ_index:
+						pos = index
+						break
+
+				if pos != -1:
+					results.insert(pos, -1)
+					matching.insert(pos, targ_index)
+				else:
+					results.append(-1)
+					matching.append(targ_index)
+
+		return results, matching
 
 
 def test():
-	targ_seq = [0, 2, 1, 1, 9, 2, 0, 2]
-	pred_seq = [0, 3, 2, 2, 1, 0, 3]
+	targ_seq = [7, 2, 1, 1, 9, 8, 2, 0, 2, 8]
+	pred_seq = [0, 3, 2, 2, 1, 0, 3, 9, 2, 1]
 	analyser = SequenceAnalyser()
-	res = analyser.get_analysis(pred_seq, targ_seq)
+	res, _ = analyser.get_analysis(pred_seq, targ_seq)
 	print(res)
+	print(_)
 
 
 if __name__ == '__main__':
