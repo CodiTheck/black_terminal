@@ -1,6 +1,10 @@
 from typing import List
 from folders import Response, Quiz, ResponsesList
 
+from tokenization import StringTokenizer, Str2IntEncoder
+from sequence import SequenceAnalyser
+from analyzer import TokenAnalyzer
+
 
 class Corrector:
 
@@ -9,6 +13,10 @@ class Corrector:
 		self._responses = []
 		# self._scores = []
 		self._responses_ordered = False
+
+		self._results = []
+		self._targ_sequences = []
+		self._pred_sequences = []
 
 	@property
 	def true_responses(self) -> ResponsesList:
@@ -60,19 +68,61 @@ class Corrector:
 
 		return index_candidate
 
+	def _correct_string(self, pred_string: str, targ_string: str) -> float:
+		total_score = 0.0
+		counts = 0
+
+		tokenizer = StringTokenizer()
+		tokens1 = tokenizer.tokenize(targ_string)
+		tokens2 = tokenizer.tokenize(pred_string)
+
+		print("true_response:", str(tokens1))
+		print("given_response:", str(tokens2))
+
+		encoder = Str2IntEncoder(tokens1)
+		targ_seq, _ = encoder.tokenize(tokens1)
+		pred_seq, info = encoder.tokenize(tokens2)
+
+		print("true_response:", str(targ_seq))
+		print("given_response:", str(pred_seq))
+		print("INFO:", _)
+
+		for token, score in info:
+			total_score += score
+
+		# delete foreign token:
+		pred_seq = [token for token in pred_seq if token != -1]
+
+		analyser = SequenceAnalyser()
+		res, _ = analyser.get_analysis(pred_seq, targ_seq)
+		print(_)
+
+		for tag in res:
+			if tag == 1:
+				total_score += 1.0
+			elif tag == 0:
+				total_score += 0.25
+
+		counts = len(targ_seq) + len(tokens2)
+		return (
+			token1,
+			token2,
+			res,
+			(total_score / counts), 
+		)
+
 	def correct(self, quiz: Quiz):
 		if self._responses_ordered:
 			given_and_true = zip(quiz.responses, self._responses)
 			for index, (given_response, true_response) in enumerate(given_and_true):
-				if given_response == true_response:
-					quiz.increase_score(1.0)
-				else:
-					quiz.increase_score(
-						self._compare_score(
-							given_response.content,
-							true_response.content,
-						)
-					)
+				targ, pred, res, score = self._correct_string(
+					given_response.content,
+					true_response.content,
+				)
+				quiz.increase_score(score)
+				self._results.append(res)
+				self._targ_sequences.append(targ)
+				self._pred_sequences.append(pred)
 		else:
 			responses_already_seen = []
 			for given_response in quiz.responses:
@@ -84,11 +134,14 @@ class Corrector:
 						index = self._find_true_response(given_response)
 						if index is not None:
 							true_response = self._responses[index]
-							score = self._compare_score(
+							targ, pred, res, score = self._correct_string(
 								given_response.content,
 								true_response.content,
 							)
 							quiz.increase_score(score)
+							self._results.append(res)
+							self._targ_sequences.append(targ)
+							self._pred_sequences.append(pred)
 							responses_already_seen.append(given_response)
 
 	def _get_string_analysis(self, string1: str, string2: str) -> str:
@@ -104,53 +157,8 @@ class Corrector:
 
 		return result
 
-	def get_analyse(self, quiz) -> str:
-		result = ''
-
-		if self._responses_ordered:
-			given_and_true = zip(quiz.responses, self._responses)
-			for index, (given_response, true_response) in enumerate(given_and_true):
-				if given_response == true_response:
-					result += "\033[92m"
-					# result += f"{index + 1}." + str(given_response) + "\n"
-					result += f"{index + 1}."
-					result += self._get_string_analysis(
-						true_response.content,
-						given_response.content,
-					) + "\n"
-				else:
-					result += "\033[91m"
-					result += f"{index + 1}." + str(given_response) + "\n"
-
-				result += "\033[0m"
-		else:
-			responses_already_seen = []
-			for given_response in quiz.responses:
-				if given_response not in responses_already_seen \
-					and given_response in self._responses:
-
-					result += "\033[92m"
-					result += "*" + str(given_response) + "\n"
-					result += "\033[0m"
-				else:
-					index = self._find_true_response(given_response)
-					if index is not None:
-						true_response = self._responses[index]
-						result += self._get_string_analysis(
-							true_response.content,
-							given_response.content,
-						) + "\n"
-					else:
-						if given_response.content:
-							result += "\033[91m"
-							result += "* " + str(given_response) + "\n"
-							result += "\033[0m"
-						else:
-							result += "\033[95m"
-							result += "You didn't answer!\n"
-							result += "\033[0m"
-
-			return result
+	def get_analyse(self) -> str:
+		return ''
 
 	def reset(self):
 		self._responses.clear()
