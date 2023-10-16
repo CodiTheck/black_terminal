@@ -1,6 +1,8 @@
 import os
 from abc import ABC, abstractclassmethod
-from typing import List, Any
+from typing import List, Dict, Any
+
+import nltk
 
 from compare import ScoringStringCompare
 
@@ -18,7 +20,8 @@ class StringTokenizer(Tokenizer):
 
 	def tokenize(self, string: str) -> List[str]:
 		""" Function of tokenization. """
-		return string.split(" ")
+		# return string.split(" ")
+		return nltk.wordpunct_tokenize(string)
 
 
 class Str2IntEncoder(Tokenizer):
@@ -26,16 +29,20 @@ class Str2IntEncoder(Tokenizer):
 	def __init__(self, base: List[str], alpha: float = 0.55):
 		super().__init__()
 		self._alpha = alpha
-		self._base_tokens = list(set(base))
+		self._base_tokens = {word:code for code, word in list(set(base))}
 		self._str_compare = ScoringStringCompare()
 		# print(f"\033[92m{self._base_tokens}\033[0m")
+	
+	@property
+	def tokens_map(self) -> Dict[str, int]:
+		return self._base_tokens
 
 	def _get_max_score_and_index(self, token: str) -> int:
 		max_score = self._str_compare.compare(token, self._base_tokens[0])
 		max_index = 0
 
 		score = 0
-		for index_ref, token_ref in enumerate(self._base_tokens[1:]):
+		for index_ref, token_ref in enumerate(self._base_tokens.keys()[1:]):
 			score = self._str_compare.compare(token, token_ref)
 			if score > max_score:
 				max_score = score
@@ -51,12 +58,16 @@ class Str2IntEncoder(Tokenizer):
 		tokens_info = []
 		max_index = 0
 		max_score = 0.0
+		foreigns = 0
 
 		for index, token in enumerate(tokens_seq):
 			max_score, max_index = self._get_max_score_and_index(token)
 			if max_score >= self._alpha:
 				ints_seq[index] = max_index
 				tokens_info.append((token, max_score))
+			else:
+				foreigns += 1
+				ints_seq[index] = -1*foreigns
 
 		return ints_seq, tokens_info
 
