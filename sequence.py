@@ -125,7 +125,7 @@ class SequenceAnalyser:
 				matching.append(pos)
 			else:
 				results.append(-2)
-				matching.append(-2)
+				matching.append(-1*index)
 
 		# print(matching)
 		for targ_index in range(targ_len):
@@ -138,10 +138,10 @@ class SequenceAnalyser:
 
 				if pos != -1:
 					results.insert(pos, -1)
-					matching.insert(pos, targ_index)
+					matching.insert(pos, -1*targ_index)
 				else:
 					results.append(-1)
-					matching.append(targ_index)
+					matching.append(-1*targ_index)
 
 		return results, matching
 

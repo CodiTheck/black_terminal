@@ -14,7 +14,9 @@ class Corrector:
 		# self._scores = []
 		self._responses_ordered = False
 
+		self._matchings = []
 		self._results = []
+		self._tokens = []
 		self._targ_sequences = []
 		self._pred_sequences = []
 
@@ -91,11 +93,11 @@ class Corrector:
 			total_score += score
 
 		# delete foreign token:
-		pred_seq = [token for token in pred_seq if token != -1]
+		# pred_seq = [token for token in pred_seq if token != -1]
 
 		analyser = SequenceAnalyser()
-		res, _ = analyser.get_analysis(pred_seq, targ_seq)
-		print(_)
+		res, matches = analyser.get_analysis(pred_seq, targ_seq)
+		print(matches)
 
 		for tag in res:
 			if tag == 1:
@@ -105,8 +107,10 @@ class Corrector:
 
 		counts = len(targ_seq) + len(tokens2)
 		return (
-			token1,
-			token2,
+			encoder.tokens_map,
+			tokens1,
+			tokens2,
+			matches,
 			res,
 			(total_score / counts), 
 		)
@@ -115,11 +119,13 @@ class Corrector:
 		if self._responses_ordered:
 			given_and_true = zip(quiz.responses, self._responses)
 			for index, (given_response, true_response) in enumerate(given_and_true):
-				targ, pred, res, score = self._correct_string(
+				tmap, targ, pred, matches, res, score = self._correct_string(
 					given_response.content,
 					true_response.content,
 				)
 				quiz.increase_score(score)
+				self._tokens.append(tmap)
+				self._matchings.append(matches)
 				self._results.append(res)
 				self._targ_sequences.append(targ)
 				self._pred_sequences.append(pred)
@@ -134,11 +140,13 @@ class Corrector:
 						index = self._find_true_response(given_response)
 						if index is not None:
 							true_response = self._responses[index]
-							targ, pred, res, score = self._correct_string(
+							tmap, targ, pred, matches, res, score = self._correct_string(
 								given_response.content,
 								true_response.content,
 							)
 							quiz.increase_score(score)
+							self._tokens.append(tmap)
+							self._matchings.append(matches)
 							self._results.append(res)
 							self._targ_sequences.append(targ)
 							self._pred_sequences.append(pred)
@@ -158,11 +166,42 @@ class Corrector:
 		return result
 
 	def get_analyse(self) -> str:
-		return ''
+		output = ''
+		analyzer = TokenAnalyzer()
+		zipped_iter = zip(
+			self._tokens,
+			self._matchings,
+			self._results,
+			self._targ_sequences,
+			self._pred_sequences,
+		)
+		for tmap, matches, res, pred, targ in zipped_iter:
+			for index, tag in zip(matches, res):
+				if tag == -2:
+					output += '\033[91m'
+					# output += '\033[4m'
+					output += str(pred[-1*index])
+					output += "\033[0m"
+				elif tag == -1:
+					output += '\033[96m'
+					output += '_'
+					output += '\033[0m'
+				elif tag == 0:
+					output += '\033[4m'
+					targ_token = targ[index]
+					analyzer.get_analysis()
+				
+				yield output
+				output = ''
 
 	def reset(self):
 		self._responses.clear()
 		self._scores.clear()
+		self._pred_sequences.clear()
+		self._targ_sequences.clear()
+		self._results.clear()
+		self._matchings.clear()
+		self._tokens.clear()
 
 	def valids(self) -> bool:
 		return self._is_valid
