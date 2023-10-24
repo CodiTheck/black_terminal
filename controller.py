@@ -1,5 +1,6 @@
+import os
 from typing import List
-from folders import Response, Quiz, ResponsesList
+from folders import Response, Quiz, ResponsesList, Question
 
 from tokenization import StringTokenizer, Str2IntEncoder
 from sequence import SequenceAnalyser
@@ -14,7 +15,6 @@ class Corrector:
 		# self._scores = []
 		self._responses_ordered = False
 
-		self._matchings = []
 		self._results = []
 		self._tokens = []
 		self._targ_sequences = []
@@ -96,10 +96,10 @@ class Corrector:
 		# pred_seq = [token for token in pred_seq if token != -1]
 
 		analyser = SequenceAnalyser()
-		res, matches = analyser.get_analysis(pred_seq, targ_seq)
-		print(matches)
+		res = analyser.get_analysis(pred_seq, targ_seq)
+		print(res)
 
-		for tag in res:
+		for tag in res.tags:
 			if tag == 1:
 				total_score += 1.0
 			elif tag == 0:
@@ -110,22 +110,20 @@ class Corrector:
 			encoder.tokens_map,
 			tokens1,
 			tokens2,
-			matches,
 			res,
-			(total_score / counts), 
+			(total_score / counts),
 		)
 
 	def correct(self, quiz: Quiz):
 		if self._responses_ordered:
 			given_and_true = zip(quiz.responses, self._responses)
 			for index, (given_response, true_response) in enumerate(given_and_true):
-				tmap, targ, pred, matches, res, score = self._correct_string(
+				tmap, targ, pred, res, score = self._correct_string(
 					given_response.content,
 					true_response.content,
 				)
 				quiz.increase_score(score)
 				self._tokens.append(tmap)
-				self._matchings.append(matches)
 				self._results.append(res)
 				self._targ_sequences.append(targ)
 				self._pred_sequences.append(pred)
@@ -140,59 +138,61 @@ class Corrector:
 						index = self._find_true_response(given_response)
 						if index is not None:
 							true_response = self._responses[index]
-							tmap, targ, pred, matches, res, score = self._correct_string(
+							tmap, targ, pred, res, score = self._correct_string(
 								given_response.content,
 								true_response.content,
 							)
 							quiz.increase_score(score)
 							self._tokens.append(tmap)
-							self._matchings.append(matches)
 							self._results.append(res)
 							self._targ_sequences.append(targ)
 							self._pred_sequences.append(pred)
 							responses_already_seen.append(given_response)
 
-	def _get_string_analysis(self, string1: str, string2: str) -> str:
-		string_length1 = len(string1)
-		string_length2 = len(string2)
-		result = ''
-
-		for character1, character2 in zip(string1, string2):
-			if character1 == character2:
-				result += f"\033[92m{character1}\033[0m"
-			else:
-				result += f"\033[91m{character2}\033[0m"
-
-		return result
-
-	def get_analyse(self) -> str:
+	def get_analysis(self) -> str:
 		output = ''
 		analyzer = TokenAnalyzer()
 		zipped_iter = zip(
 			self._tokens,
-			self._matchings,
 			self._results,
 			self._targ_sequences,
 			self._pred_sequences,
 		)
-		for tmap, matches, res, pred, targ in zipped_iter:
-			for index, tag in zip(matches, res):
+		for tmap, res, pred, targ in zipped_iter:
+			for pred_index, targ_index in zip(res.pred_index, res.targ_index):
 				if tag == -2:
 					output += '\033[91m'
 					# output += '\033[4m'
-					output += str(pred[-1*index])
+					output += str(pred[-1*pred_index])
 					output += "\033[0m"
 				elif tag == -1:
 					output += '\033[96m'
-					output += '_'
+					output += str(targ[-1*targ_index])
 					output += '\033[0m'
-				elif tag == 0:
-					output += '\033[4m'
-					targ_token = targ[index]
-					analyzer.get_analysis()
-				
+				elif tag == 0 or tag == 1:
+					if tag == 0:
+						output += '\033[4m'
+
+					pred_token = pred[pred_index]
+					targ_token = targ[targ_index]
+
+					result = analyzer.get_analysis(pred_token, targ_index)
+					# print(result)
+
+					for index, char in enumerate(pred_token):
+						if result[index]:
+							output += f"\033[92m{char}\033[0m"
+						else:
+							output += f"\033[91m{char}\033[0m"
+
+					output += '\033[0m'
+
 				yield output
 				output = ''
+
+			output += '\n'
+
+		yield output
 
 	def reset(self):
 		self._responses.clear()
@@ -205,3 +205,36 @@ class Corrector:
 
 	def valids(self) -> bool:
 		return self._is_valid
+
+
+def main():
+	""" Main function. """
+	question = Question("Definie les pointeurs.")
+	print(f"Question: {question}")
+	true_responses_list = ResponsesList(responses_list=[
+		"Un pointeurs est une variable qui permet de stocker l'adresse mémoire d'une autre variable."
+	])
+	print(f"TrueResponse: {true_responses_list}")
+	pred_response = Response(
+		"Un pointeurs sert à stocker l'adresse mémoire d'autres variables."
+	)
+	print(f"PredResponse: {pred_response}")
+
+	quiz = Quiz(question, 1)
+	quiz.add(pred_response)
+
+	# instanciation of the corrector:
+	corrector = Corrector()
+	corrector.true_responses = true_responses_list
+
+	corrector.correct(quiz)
+	print("Score got: ", quiz.score)
+
+
+if __name__ == '__main__':
+	try:
+		main()
+		os.sys.exit(0)
+	except KeyboardInterrupt:
+		print("Canceled by user.")
+		os.sys.exit(125)

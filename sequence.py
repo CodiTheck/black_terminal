@@ -87,6 +87,19 @@ class Sequence:
 class SequenceAnalyser:
 	""" Sequence Analyser """
 
+	@dataclass
+	class Result:
+		tags: List[int]  # contains the target value as -2, -1, 0, 1.
+		targ_index: List[int]  # contains the indexes of targeted tokens.
+		pred_index: List[int]  # contains the indexes of predicted tokens.
+
+		def __str__(self) -> str:
+			return (
+				f"TAG:    {len(self.tags):4d} {str(self.tags)}\n"
+				f"TARGET: {len(self.targ_index):4d} {str(self.targ_index)}\n"
+				f"PREDIC: {len(self.pred_index):4d} {str(self.pred_index)}\n"
+			)
+
 	def _is_ordered(self, seq: List[Any]) -> bool:
 		current_value = seq[0]
 		for i in range(1, len(seq)):
@@ -99,7 +112,7 @@ class SequenceAnalyser:
 
 	def get_analysis(self,
 									 pred_tokens: List[Any],
-									 targ_tokens: List[Any]) -> List[int]:
+									 targ_tokens: List[Any]) -> 'Result':
 
 		pred_len = len(pred_tokens)
 		targ_len = len(targ_tokens)
@@ -109,6 +122,8 @@ class SequenceAnalyser:
 
 		results = []
 		matching = []
+		result = self.Result([], [], [])
+
 		pos = -1
 		max_pos = -1
 
@@ -117,42 +132,49 @@ class SequenceAnalyser:
 			pos = targ_seq.indexof(pred)
 			if pos != -1:
 				if pos > max_pos:
-					results.append(1)
+					result.tags.append(1)
 					max_pos = pos
 				else:
-					results.append(0)
+					result.tags.append(0)
 
-				matching.append(pos)
+				result.targ_index.append(pos)
+				result.pred_index.append(index)
 			else:
-				results.append(-2)
-				matching.append(-1*index)
+				result.tags.append(-2)
+				result.targ_index.append(-1*index)
+				result.pred_index.append(-1*index)
 
-		# print(matching)
+		# print(result.tags)
 		for targ_index in range(targ_len):
-			if targ_index not in matching:
+			if targ_index not in result.targ_index:
 				pos = -1
-				for index, targ_position in enumerate(matching):
+				for index, targ_position in enumerate(result.targ_index):
 					if targ_position > targ_index:
 						pos = index
 						break
 
 				if pos != -1:
-					results.insert(pos, -1)
-					matching.insert(pos, -1*targ_index)
+					# results.insert(pos, -1)
+					result.tags.insert(pos, -1)
+					# matching.insert(pos, -1*targ_index)
+					result.targ_index.insert(pos, -1*targ_index)
+					result.pred_index.insert(pos, -1*targ_index)
 				else:
-					results.append(-1)
-					matching.append(-1*targ_index)
+					# results.append(-1)
+					result.tags.append(-1)
+					# matching.append(-1*targ_index)
+					result.targ_index.append(-1*targ_index)
+					result.pred_index.append(-1*targ_index)
 
-		return results, matching
+		return result
 
 
 def test():
 	targ_seq = [7, 2, 1, 1, 9, 8, 2, 0, 2, 8]
 	pred_seq = [0, 3, 2, 2, 1, 0, 3, 9, 2, 1]
 	analyser = SequenceAnalyser()
-	res, _ = analyser.get_analysis(pred_seq, targ_seq)
+	res = analyser.get_analysis(pred_seq, targ_seq)
 	print(res)
-	print(_)
 
 
 if __name__ == '__main__':

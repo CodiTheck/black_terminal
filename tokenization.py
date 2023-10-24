@@ -29,20 +29,26 @@ class Str2IntEncoder(Tokenizer):
 	def __init__(self, base: List[str], alpha: float = 0.55):
 		super().__init__()
 		self._alpha = alpha
-		self._base_tokens = {word:code for code, word in list(set(base))}
+
+		base = list(set(base))
+		self._base_tokens = {word:code for code, word in enumerate(base)}
 		self._str_compare = ScoringStringCompare()
 		# print(f"\033[92m{self._base_tokens}\033[0m")
+
+		self._tokens_list = base
 	
 	@property
 	def tokens_map(self) -> Dict[str, int]:
 		return self._base_tokens
 
 	def _get_max_score_and_index(self, token: str) -> int:
-		max_score = self._str_compare.compare(token, self._base_tokens[0])
+		# token_keys = list(self._base_tokens.keys())
+		# print(token_keys)
+		max_score = self._str_compare.compare(token, self._tokens_list[0])
 		max_index = 0
 
 		score = 0
-		for index_ref, token_ref in enumerate(self._base_tokens.keys()[1:]):
+		for index_ref, token_ref in enumerate(self._tokens_list[1:]):
 			score = self._str_compare.compare(token, token_ref)
 			if score > max_score:
 				max_score = score
