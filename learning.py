@@ -72,7 +72,7 @@ class Learning(Strategy):
 					Console.print_message("\033[92m \033[4mANALYSIS\033[0m\n")
 					analysis_iterator = corrector.get_analysis()
 					for message in analysis_iterator:
-						Console.print_message(message)
+						Console.print_message(f"{message} ")
 
 					Console.make_new_line()
 					Console.print_message("\033[93m \033[4mTRUE RESPONSES\033[0m\n")
@@ -91,7 +91,7 @@ class Learning(Strategy):
 				if character != '':
 					break
 
-				# corrector.reset()
+				corrector.reset()
 
 			# Console.make_new_line()
 			# Console.print_message(
