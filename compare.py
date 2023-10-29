@@ -58,7 +58,7 @@ class ScoringStringCompare:
 
 def main():
 	target = 'Introvertie'
-	predict = 'Instro'
+	predict = 'Instrovestique'
 	strcomp = ScoringStringCompare()
 	score = strcomp.compare(predict, target)
 	print("score =", score)

@@ -171,7 +171,7 @@ class SequenceAnalyser:
 
 def test():
 	targ_seq = [7, 2, 1, 1, 9, 8, 2, 0, 2, 8]
-	pred_seq = [0, 3, 2, 2, 1, 0, 3, 9, 2, 1]
+	pred_seq = [7, 3, 2, 2, 1, 0, 3, 9, 2, 1]
 	analyser = SequenceAnalyser()
 	res = analyser.get_analysis(pred_seq, targ_seq)
 	print(res)
