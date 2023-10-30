@@ -90,15 +90,28 @@ class SequenceAnalyser:
 	@dataclass
 	class Result:
 		tags: List[int]  # contains the target value as -2, -1, 0, 1.
-		targ_index: List[int]  # contains the indexes of targeted tokens.
-		pred_index: List[int]  # contains the indexes of predicted tokens.
+		abspos: List[int]  # contains the absolute positions in predicted sequence.
+		relpos: List[float]  # contains the relative positions in predicted sequence.
 
 		def __str__(self) -> str:
-			return (
-				f"TAG:    {len(self.tags):4d} {str(self.tags)}\n"
-				f"TARGET: {len(self.targ_index):4d} {str(self.targ_index)}\n"
-				f"PREDIC: {len(self.pred_index):4d} {str(self.pred_index)}\n"
-			)
+			""" Result object to string """
+			string = 'TAG:\t'
+			string += f"{len(self.tags):4d} -> "
+			for tag in self.tags:
+				string += f"{tag:5d} "
+
+			string += "\n"
+			string += f"{len(self.abspos):4d} -> "
+			for absp in self.abspos:
+				string += f"{absp:5d} "
+
+			string += "\n"
+			string += f"{len(self.relpos):4d} -> "
+			for relp in self.relpos:
+				string += f"{relp:5.2f} "
+
+			string += '\n'
+			return string
 
 	def _is_ordered(self, seq: List[Any]) -> bool:
 		current_value = seq[0]
