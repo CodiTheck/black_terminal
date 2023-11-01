@@ -100,12 +100,12 @@ class SequenceAnalyser:
 			for tag in self.tags:
 				string += f"{tag:5d} "
 
-			string += "\n"
+			string += "\nABS:\t"
 			string += f"{len(self.abspos):4d} -> "
 			for absp in self.abspos:
 				string += f"{absp:5d} "
 
-			string += "\n"
+			string += "\nREL:\t"
 			string += f"{len(self.relpos):4d} -> "
 			for relp in self.relpos:
 				string += f"{relp:5.2f} "
@@ -140,44 +140,44 @@ class SequenceAnalyser:
 		pos = -1
 		max_pos = -1
 
-		for index in range(pred_len):
-			pred = pred_seq[index]
-			pos = targ_seq.indexof(pred)
-			if pos != -1:
-				if pos > max_pos:
-					result.tags.append(1)
-					max_pos = pos
-				else:
-					result.tags.append(0)
+		pred_rlp = -1
+		targ_rlp = -1
 
-				result.targ_index.append(pos)
-				result.pred_index.append(index)
+		# REL = -2.00: strange token;
+		# REL =  2.00: mixing token;
+		for pred_index in range(pred_len):
+			pred = pred_seq[pred_index]
+			targ_index = targ_seq.indexof(pred)
+
+			pred_rlp = pred_index / (pred_len - 1)
+			if targ_index != -1:
+				targ_rlp = targ_index / (targ_len - 1)
+
+				distance = pred_rlp - targ_rlp
+				# if the distance is 0 then we append 1 otherwise we append 0.
+				result.tags.append(1 if distance == 0 else 0)
+				result.relpos.append(distance)
 			else:
 				result.tags.append(-2)
-				result.targ_index.append(-1*index)
-				result.pred_index.append(-1*index)
+				result.relpos.append(-2.0)
 
-		# print(result.tags)
+			result.abspos.append(pred_index)
+
 		for targ_index in range(targ_len):
-			if targ_index not in result.targ_index:
-				pos = -1
-				for index, targ_position in enumerate(result.targ_index):
-					if targ_position > targ_index:
-						pos = index
-						break
+			targ = targ_seq[targ_index]
+			pred_index = pred_seq.indexof(targ)
 
-				if pos != -1:
-					# results.insert(pos, -1)
-					result.tags.insert(pos, -1)
-					# matching.insert(pos, -1*targ_index)
-					result.targ_index.insert(pos, -1*targ_index)
-					result.pred_index.insert(pos, -1*targ_index)
+			if pred_index == -1:
+				targ_rlp = targ_index / (targ_len - 1)
+				pred_abs = int(targ_rlp * pred_len)
+				if pred_abs < len(result.tags):
+					result.tags.insert(pred_abs, -1)
+					result.relpos.insert(pred_abs, 2.0)
+					result.abspos.insert(pred_abs, targ_index)
 				else:
-					# results.append(-1)
 					result.tags.append(-1)
-					# matching.append(-1*targ_index)
-					result.targ_index.append(-1*targ_index)
-					result.pred_index.append(-1*targ_index)
+					result.relpos.append(2.0)
+					result.abspos.append(targ_index)
 
 		return result
 
