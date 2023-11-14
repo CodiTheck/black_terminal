@@ -8,6 +8,9 @@ from utils import inputf
 
 class Learning(Strategy):
 
+	def __init__(self):
+		self._corrector = Corrector()
+
 	def _scan_response(self, response_type: str = 'txt') -> str:
 		print("\033[97m", end='')
 		string = input(" >_ ")
@@ -24,7 +27,6 @@ class Learning(Strategy):
 	def run(self, user: User, folder: Folder):
 		Console.clear()
 
-		corrector = Corrector()
 		for index in range(len(folder)):
 			Console.clear()
 			paper = folder[index]
@@ -50,7 +52,7 @@ class Learning(Strategy):
 				Console.make_new_line()
 
 				quiz = paper[index]
-				corrector.true_responses = quiz.responses
+				# self._corrector.true_responses = quiz.responses
 
 				# quiz = Quiz(question, nb_responses=len(true_responses))
 				Console.print_message(" \033[4mQUESTION:\033[0m\n")
@@ -66,13 +68,13 @@ class Learning(Strategy):
 					user.increase_expected(1.0)
 					res_type_index += 1
 
-				corrector.correct(quiz)
+				self._corrector.correct(quiz)
 				user.increase_score(quiz.score)
 
 				if quiz.accuracy_score < 100.0:
 					Console.make_new_line()
 					Console.print_message("\033[92m \033[4mANALYSIS\033[0m\n")
-					analysis_iterator = corrector.get_analysis()
+					analysis_iterator = self._corrector.get_analysis()
 					for message in analysis_iterator:
 						Console.print_message(f"{message} ")
 
@@ -93,7 +95,7 @@ class Learning(Strategy):
 				if character != '':
 					break
 
-				corrector.reset()
+				self._corrector.reset()
 
 			# Console.make_new_line()
 			# Console.print_message(

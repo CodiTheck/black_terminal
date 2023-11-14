@@ -2,6 +2,8 @@ import os
 from abc import ABC, abstractmethod
 from typing import Any, List
 
+import spacy
+
 
 class Analyzer(ABC):
 
@@ -34,6 +36,22 @@ class TokenAnalyzer(Analyzer):
 		return results
 
 
+class SementicAnalyser(Analyzer):
+
+	def __init__(self):
+		super().__init__()
+		self._nlp = spacy.load('fr_core_news_md')
+
+	def get_analysis(self, pred: str, targ: str) -> float:
+		""" Function to get analysis """
+		doc1 = self._nlp(pred)
+		doc2 = self._nlp(targ)
+
+		score = doc1.similarity(doc2)
+		return score
+
+
+
 def main():
 	try:
 		targ_seq = "autre"
@@ -50,6 +68,13 @@ def main():
 				print(f"\033[91m{char}\033[0m", end='')
 
 		print()
+
+		review1 = "Un pointeur est une variable qui permet de stocker l'adresse mémoire d'une autre variable."
+		review2 = "Un pointeur permet de sauvegarder l'adresse mémoire d'une variable."
+
+		analyzer = SementicAnalyser()
+		score = analyzer.get_analysis(review1, review2)
+		print(score)
 
 		os.sys.exit(0)
 	except KeyboardInterrupt:

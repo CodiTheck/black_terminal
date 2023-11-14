@@ -1,6 +1,6 @@
 import os
 from abc import ABC, abstractclassmethod
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Tuple
 
 import nltk
 
@@ -36,6 +36,7 @@ class Str2IntEncoder(Tokenizer):
 		# print(f"\033[92m{self._base_tokens}\033[0m")
 
 		self._tokens_list = base
+		self._token_infos = []
 	
 	@property
 	def tokens_map(self) -> Dict[str, int]:
@@ -61,7 +62,7 @@ class Str2IntEncoder(Tokenizer):
 			raise ValueError("Base tokens must be a list of strings.")
 
 		ints_seq = [-1]*len(tokens_seq)
-		tokens_info = []
+		self._token_infos = []
 		max_index = 0
 		max_score = 0.0
 		foreigns = 0
@@ -70,12 +71,15 @@ class Str2IntEncoder(Tokenizer):
 			max_score, max_index = self._get_max_score_and_index(token)
 			if max_score >= self._alpha:
 				ints_seq[index] = max_index
-				tokens_info.append((token, max_score))
+				self._token_infos.append((token, max_score))
 			else:
 				foreigns += 1
 				ints_seq[index] = -1*foreigns
 
-		return ints_seq, tokens_info
+		return ints_seq
+
+	def get_token_infos(self) -> List[Tuple[str, float]]:
+		return self._token_infos
 
 
 def main():

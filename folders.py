@@ -97,14 +97,17 @@ class Quiz:
 	def __init__(self,
 							 question: Question,
 							 responses: ResponsesList,
-							 response_types: List[str]):
+							 response_types: List[str],
+							 ordered: bool = False):
 
 		self._question = question
 		self._responses = responses
 		self._response_types = response_types
+		self._ordered = ordered
 
 		self._propositions = []
 		self._score = 0.0
+		self._expected = float(len(responses))
 
 	@property
 	def score(self) -> float:
@@ -114,7 +117,7 @@ class Quiz:
 	@property
 	def accuracy_score(self) -> float:
 		""" Returns the score like purcentage """
-		return self._score * 100.0 / len(self._responses)
+		return self._score * 100.0 / self._expected
 
 	@property
 	def responses(self) -> ResponsesList:
@@ -129,6 +132,11 @@ class Quiz:
 	@property
 	def propositions(self) -> List[Response]:
 		return self._propositions
+
+	@property
+	def ordered(self) -> bool:
+		""" Returns True if the answsers must be ordered """
+		return self._ordered
 
 	@property
 	def completed(self) -> bool:
