@@ -8,7 +8,7 @@ from utils import inputf
 
 class Learning(Strategy):
 
-	def _scan_response(self) -> str:
+	def _scan_response(self, response_type: str = 'txt') -> str:
 		print("\033[97m", end='')
 		string = input(" >_ ")
 		print("\033[0m", end='')
@@ -49,20 +49,22 @@ class Learning(Strategy):
 				)
 				Console.make_new_line()
 
-				question, true_responses = paper[index]
-				corrector.true_responses = true_responses
+				quiz = paper[index]
+				corrector.true_responses = quiz.responses
 
-				quiz = Quiz(question, nb_responses=len(true_responses))
+				# quiz = Quiz(question, nb_responses=len(true_responses))
 				Console.print_message(" \033[4mQUESTION:\033[0m\n")
-				Console.print_message(f"\033[94m{question}\033[0m\n")
+				Console.print_message(f"\033[94m{quiz}\033[0m\n")
 				Console.make_new_line()
 
 				Console.print_message("\033[97m \033[4mYour responses:\033[0m\n")
 
+				res_type_index = 0
 				while not quiz.completed:
-					response = self._scan_response()
+					response = self._scan_response(quiz.response_types[res_type_index])
 					user.answer(quiz, response)
 					user.increase_expected(1.0)
+					res_type_index += 1
 
 				corrector.correct(quiz)
 				user.increase_score(quiz.score)
@@ -76,7 +78,7 @@ class Learning(Strategy):
 
 					Console.make_new_line()
 					Console.print_message("\033[93m \033[4mTRUE RESPONSES\033[0m\n")
-					Console.print_message(f"\033[93m{true_responses}\033[0m")
+					Console.print_message(f"\033[93m{quiz.responses}\033[0m")
 				else:
 					Console.print_message(
 						f"\033[92m Congratulation {user.name}!\033[0m\n"

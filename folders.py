@@ -1,4 +1,5 @@
 import re
+import json
 import os
 import random
 from typing import List, Tuple
@@ -44,9 +45,9 @@ class Response:
 class ResponsesList:
 
 	def __init__(self,
-							string: str = '',
-							responses_list: List[str] = [],
-							ordered: bool = False):
+							 string: str = '',
+							 responses_list: List[str] = [],
+							 ordered: bool = False):
 		self._responses = []
 		self._ordered = ordered
 
@@ -63,6 +64,7 @@ class ResponsesList:
 
 	@property
 	def ordered(self) -> bool:
+		""" Returns True if the responses must be ordered """
 		return self._ordered
 
 	def __len__(self):
@@ -92,29 +94,41 @@ class ResponsesList:
 
 class Quiz:
 
-	def __init__(self, question: Question, nb_responses: int):
+	def __init__(self,
+							 question: Question,
+							 responses: ResponsesList,
+							 response_types: List[str]):
 
 		self._question = question
-		self._nb_responses = nb_responses
+		self._responses = responses
+		self._response_types = response_types
 
-		self._responses = []
+		self._propositions = []
 		self._score = 0.0
 
 	@property
-	def completed(self) -> bool:
-		return self._completed
-
-	@property
 	def score(self) -> float:
+		""" Returns the the score value """
 		return self._score
 
 	@property
 	def accuracy_score(self) -> float:
-		return self._score * 100.0 / self._nb_responses
+		""" Returns the score like purcentage """
+		return self._score * 100.0 / len(self._responses)
 
 	@property
-	def responses(self) -> List[str]:
+	def responses(self) -> ResponsesList:
+		""" Returns the list of responses class """
 		return self._responses
+
+	@property
+	def response_types(self) -> List[str]:
+		""" Returns the list of response types """
+		return self._response_types
+
+	@property
+	def propositions(self) -> List[Response]:
+		return self._propositions
 
 	@property
 	def completed(self) -> bool:
@@ -123,14 +137,14 @@ class Quiz:
 				of responses list is equal to total number 
 				of responses expected.
 		"""
-		return len(self._responses) == self._nb_responses
+		return len(self._propositions) >= len(self._responses)
 
 	def increase_score(self, value: float):
 		self._score += value
 
 	def add(self, response: Response):
 		if not self.completed:
-			self._responses.append(response)
+			self._propositions.append(response)
 
 	def __str__(self) -> str:
 		return f"\033[92m{self._question}\033[0m"
@@ -151,6 +165,7 @@ class Paper:
 
 		self._questions = []
 		self._responses = []
+		self._response_types = []
 		self._parse_file()
 
 		if len(self._questions) != len(self._responses):
@@ -167,49 +182,19 @@ class Paper:
 		return self._content
 
 	def _parse_file(self):
-		question = ''
-		answer = ''
-		token = ''
-
-		isquestion = False
-		isanswer = False
-
-		for character in self._content:
-			if character == '[':
-				if isquestion:
-					isquestion = False
-					self._questions.append(Question(question.strip()))
-					question = ''
-
-				if isanswer:
-					isanswer = False
-					self._responses.append(ResponsesList(answer.strip()))
-					answer = ''
-
-				continue
-
-			if character == ']':
-				if token.upper() == 'QUESTION':
-					isquestion = True
-				elif token.upper() == 'RESPONSES':
-					isanswer = True
-
-				token = ''
-				continue
-
-			if isquestion:
-				question += character
-
-			if isanswer:
-				answer += character
-
-			if not isquestion and not isanswer:
-				token += character
-
-		if answer != '':
-			self._responses.append(ResponsesList(answer.strip()))
+		""" Function of file parsing """
+		content_loaded = json.loads(self._content)
+		if content_loaded:
+			print(content_loaded)
+			for quiz in content_loaded['quiz']:
+				self._questions.append(Question(quiz['question']))
+				self._responses.append(
+					ResponsesList(responses_list=[quiz['response'],])
+				)
+				self._response_types.append([quiz['response_type'],])
 
 	def shuffle(self):
+		""" Function used to shuffle questions and responses """
 		index_list = list(range(len(self._questions)))
 		if index_list:
 			random.shuffle(index_list)
@@ -228,8 +213,10 @@ class Paper:
 	def __len__(self) -> int:
 		return len(self._questions)
 
-	def __getitem__(self, index) -> Tuple[Question, ResponsesList]:
-		return self._questions[index], self._responses[index]
+	def __getitem__(self, index) -> Quiz:
+		return Quiz(self._questions[index],
+					  self._responses[index],
+					  self._response_types[index])
 
 	def __str__(self) -> str:
 		content = ""
