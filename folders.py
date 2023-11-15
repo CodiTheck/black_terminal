@@ -98,16 +98,19 @@ class Quiz:
 							 question: Question,
 							 responses: ResponsesList,
 							 response_types: List[str],
+							 transition: str = '',
 							 ordered: bool = False):
 
 		self._question = question
+		self._transition = transition
 		self._responses = responses
 		self._response_types = response_types
 		self._ordered = ordered
 
 		self._propositions = []
 		self._score = 0.0
-		self._expected = float(len(responses))
+		self._length = len(responses) + (1 if transition else 0)
+		self._expected = float(self._length)
 
 	@property
 	def score(self) -> float:
@@ -118,6 +121,11 @@ class Quiz:
 	def accuracy_score(self) -> float:
 		""" Returns the score like purcentage """
 		return self._score * 100.0 / self._expected if self._expected else 100.0
+
+	@property
+	def transition(self) -> str:
+		""" Returns the transition of this quiz """
+		return self._transition
 
 	@property
 	def responses(self) -> ResponsesList:
@@ -150,7 +158,7 @@ class Quiz:
 				of responses list is equal to total number 
 				of responses expected.
 		"""
-		return len(self._propositions) >= len(self._responses)
+		return len(self._propositions) >= self._length
 
 	def increase_score(self, value: float):
 		self._score += value
@@ -158,6 +166,11 @@ class Quiz:
 	def add(self, response: Response):
 		if not self.completed:
 			self._propositions.append(response)
+
+	def get_true_response(self) -> str:
+		""" Returns the transition and all the responses """
+		return (f"{self._transition}\n" if self._transition else '') \
+			+ str(self._responses)
 
 	def __str__(self) -> str:
 		return f"\033[92m{self._question}\033[0m"
@@ -177,6 +190,7 @@ class Paper:
 			self._content = file.read()
 
 		self._questions = []
+		self._transitions = []
 		self._responses = []
 		self._ordered_res = []
 		self._response_types = []
@@ -200,6 +214,7 @@ class Paper:
 		content_loaded = json.loads(self._content)
 		if content_loaded:
 			question = ''
+			transition = ''
 			response = ''
 			response_type = ''
 			responses = []
@@ -207,6 +222,7 @@ class Paper:
 
 			for quiz in content_loaded['paper']:
 				question = quiz.get('question')
+				transition = quiz.get('transition', '')
 				response = quiz.get('response')
 				responses = [response] if response else quiz.get('responses', [])
 
@@ -220,6 +236,7 @@ class Paper:
 				)
 				self._ordered_res.append(quiz.get('ordered', False))
 				self._response_types.append(response_types)
+				self._transitions.append(transition)
 
 	def shuffle(self):
 		""" Function used to shuffle questions and responses """
@@ -230,21 +247,25 @@ class Paper:
 			responses = []
 			response_types = []
 			ordered_res = []
+			transitions = []
 			for index in index_list:
 				questions.append(self._questions[index])
 				responses.append(self._responses[index])
 				ordered_res.append(self._ordered_res[index])
 				response_types.append(self._response_types)
+				transitions.append(self._transitions[index])
 
 			self._questions.clear()
 			self._responses.clear()
 			self._ordered_res.clear()
 			self._response_types.clear()
+			self._transitions.clear()
 
 			self._questions.extend(questions)
 			self._responses.extend(responses)
 			self._ordered_res.extend(ordered_res)
 			self._response_types.extend(response_types)
+			self._transitions.extend(transitions)
 
 	def __len__(self) -> int:
 		return len(self._questions)
@@ -253,7 +274,8 @@ class Paper:
 		return Quiz(self._questions[index],
 					  self._responses[index],
 					  self._response_types[index],
-					  self._ordered_res[index])
+					  self._transitions[index],
+					  self._ordered_res[index],)
 
 	def __str__(self) -> str:
 		content = ""

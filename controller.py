@@ -38,18 +38,18 @@ class Corrector:
 
 		return response_found
 
-	def _verify(self, proposition: Response, response: Response) -> float:
+	def _verify(self, proposition: str, response: str) -> float:
 		""" Function of response verification """
-		if not response.content:
+		if not response:
 			return 1.0
 
-		if not proposition.content:
+		if not proposition:
 			return 0.0
 
 		total_score = 0.0
 		tokenizer = StringTokenizer()
-		pred_tokens = tokenizer.tokenize(proposition.content)
-		targ_tokens = tokenizer.tokenize(response.content)
+		pred_tokens = tokenizer.tokenize(proposition)
+		targ_tokens = tokenizer.tokenize(response)
 
 		encoder = Str2IntEncoder(targ_tokens)
 		pred_tokens = encoder.tokenize(pred_tokens)
@@ -64,7 +64,7 @@ class Corrector:
 		# if n_infos > 0:
 		#		total_score /= n_infos
 
-		score = self._analyser.get_analysis(proposition.content, response.content)
+		score = self._analyser.get_analysis(proposition, response)
 		total_score = (total_score + score)
 
 		# self._propositions.append(propos)
@@ -75,18 +75,26 @@ class Corrector:
 
 	def correct(self, quiz: Quiz):
 		""" Function of quiz correction """
+		propositions = quiz.propositions[:]
+		if quiz.transition:
+			first = propositions[0]
+			score = self._verify(first.content, quiz.transition)
+			quiz.increase_score(score)
+			if score > 0.0:
+				del propositions[0]
+
 		if quiz.ordered:
-			iterator = zip(quiz.propositions, quiz.responses)
+			iterator = zip(propositions, quiz.responses)
 			for proposition, response in iterator:
-				score = self._verify(proposition, response)
+				score = self._verify(proposition.content, response.content)
 				quiz.increase_score(score)
 		else:
 			responses = quiz.responses[:]
-			for proposition in quiz.propositions:
+			for proposition in propositions:
 				response = self._find(proposition, responses)
 				if response:
 					responses.remove(response)
-					score = self._verify(proposition, response)
+					score = self._verify(proposition.content, response.content)
 					quiz.increase_score(score)
 
 

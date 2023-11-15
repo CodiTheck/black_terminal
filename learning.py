@@ -11,9 +11,9 @@ class Learning(Strategy):
 	def __init__(self):
 		self._corrector = Corrector()
 
-	def _scan_response(self, response_type: str = 'txt') -> str:
+	def _scan_response(self, response_type: str = 'txt', pref: str = '>_') -> str:
 		print("\033[97m", end='')
-		string = input(" >_ ")
+		string = input(pref + ' ')
 		print("\033[0m", end='')
 		# string = inputf()
 		return string
@@ -62,6 +62,10 @@ class Learning(Strategy):
 
 				Console.print_message("\033[97m \033[4mYour responses:\033[0m\n")
 
+				if quiz.transition:
+					response = self._scan_response(pref='/ ')
+					user.answer(quiz, response)
+
 				res_type_index = 0
 				while not quiz.completed:
 					response = self._scan_response(quiz.response_types[res_type_index])
@@ -80,7 +84,7 @@ class Learning(Strategy):
 
 					Console.make_new_line()
 					Console.print_message("\033[93m \033[4mTRUE RESPONSES\033[0m\n")
-					Console.print_message(f"\033[93m{quiz.responses}\033[0m")
+					Console.print_message(f"\033[93m{quiz.get_true_response()}\033[0m")
 				else:
 					Console.print_message(
 						f"\033[92m Congratulation {user.name}!\033[0m\n"
