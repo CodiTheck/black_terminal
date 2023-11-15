@@ -1,0 +1,3 @@
+nltk==3.8.1
+spacy==3.7.2
+fr-core-news-md @ https://github.com/explosion/spacy-models/releases/download/fr_core_news_md-3.7.0/fr_core_news_md-3.7.0-py3-none-any.whl#sha256=f6a4fa799b1daf2a635fe55a7de6b344379dc542d54d4c490113f0bc94bed4b8
