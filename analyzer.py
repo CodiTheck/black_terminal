@@ -44,10 +44,16 @@ class SementicAnalyser(Analyzer):
 
 	def get_analysis(self, pred: str, targ: str) -> float:
 		""" Function to get analysis """
+		if not pred or not targ:
+			return 0.0
+
 		doc1 = self._nlp(pred)
 		doc2 = self._nlp(targ)
+		try:
+			score = doc1.similarity(doc2)
+		except UserWarning:
+			pass
 
-		score = doc1.similarity(doc2)
 		return score
 
 

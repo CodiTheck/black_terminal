@@ -117,7 +117,7 @@ class Quiz:
 	@property
 	def accuracy_score(self) -> float:
 		""" Returns the score like purcentage """
-		return self._score * 100.0 / self._expected
+		return self._score * 100.0 / self._expected if self._expected else 100.0
 
 	@property
 	def responses(self) -> ResponsesList:
@@ -137,6 +137,11 @@ class Quiz:
 	def ordered(self) -> bool:
 		""" Returns True if the answsers must be ordered """
 		return self._ordered
+
+	@property
+	def expected(self) -> float:
+		""" Returns the expected score """
+		return self._expected
 
 	@property
 	def completed(self) -> bool:
@@ -173,6 +178,7 @@ class Paper:
 
 		self._questions = []
 		self._responses = []
+		self._ordered_res = []
 		self._response_types = []
 		self._parse_file()
 
@@ -193,13 +199,27 @@ class Paper:
 		""" Function of file parsing """
 		content_loaded = json.loads(self._content)
 		if content_loaded:
-			print(content_loaded)
-			for quiz in content_loaded['quiz']:
-				self._questions.append(Question(quiz['question']))
+			question = ''
+			response = ''
+			response_type = ''
+			responses = []
+			response_types = []
+
+			for quiz in content_loaded['paper']:
+				question = quiz.get('question')
+				response = quiz.get('response')
+				responses = [response] if response else quiz.get('responses', [])
+
+				response_type = quiz.get('response_type', 'txt')
+				response_types = [response_type]*len(responses) if response_type \
+					else quiz.get('response_types', [])
+
+				self._questions.append(Question(question))
 				self._responses.append(
-					ResponsesList(responses_list=[quiz['response'],])
+					ResponsesList(responses_list=responses)
 				)
-				self._response_types.append([quiz['response_type'],])
+				self._ordered_res.append(quiz.get('ordered', False))
+				self._response_types.append(response_types)
 
 	def shuffle(self):
 		""" Function used to shuffle questions and responses """
@@ -208,15 +228,23 @@ class Paper:
 			random.shuffle(index_list)
 			questions = []
 			responses = []
+			response_types = []
+			ordered_res = []
 			for index in index_list:
 				questions.append(self._questions[index])
 				responses.append(self._responses[index])
+				ordered_res.append(self._ordered_res[index])
+				response_types.append(self._response_types)
 
 			self._questions.clear()
 			self._responses.clear()
+			self._ordered_res.clear()
+			self._response_types.clear()
 
 			self._questions.extend(questions)
 			self._responses.extend(responses)
+			self._ordered_res.extend(ordered_res)
+			self._response_types.extend(response_types)
 
 	def __len__(self) -> int:
 		return len(self._questions)
@@ -224,7 +252,8 @@ class Paper:
 	def __getitem__(self, index) -> Quiz:
 		return Quiz(self._questions[index],
 					  self._responses[index],
-					  self._response_types[index])
+					  self._response_types[index],
+					  self._ordered_res[index])
 
 	def __str__(self) -> str:
 		content = ""

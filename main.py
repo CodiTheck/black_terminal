@@ -100,6 +100,7 @@ class App:
 
 def main():
 	try:
+		print("Program loading into memory ...")
 		parser = ArgumentParser(prog="CODE LEARNING")
 		parser.add_argument(
 			'dirpath',

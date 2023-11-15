@@ -37,7 +37,7 @@ class Str2IntEncoder(Tokenizer):
 
 		self._tokens_list = base
 		self._token_infos = []
-	
+
 	@property
 	def tokens_map(self) -> Dict[str, int]:
 		return self._base_tokens

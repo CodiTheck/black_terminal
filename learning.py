@@ -53,6 +53,7 @@ class Learning(Strategy):
 
 				quiz = paper[index]
 				# self._corrector.true_responses = quiz.responses
+				user.increase_expected(quiz.expected)
 
 				# quiz = Quiz(question, nb_responses=len(true_responses))
 				Console.print_message(" \033[4mQUESTION:\033[0m\n")
@@ -65,18 +66,17 @@ class Learning(Strategy):
 				while not quiz.completed:
 					response = self._scan_response(quiz.response_types[res_type_index])
 					user.answer(quiz, response)
-					user.increase_expected(1.0)
 					res_type_index += 1
 
 				self._corrector.correct(quiz)
 				user.increase_score(quiz.score)
 
 				if quiz.accuracy_score < 100.0:
-					Console.make_new_line()
-					Console.print_message("\033[92m \033[4mANALYSIS\033[0m\n")
-					analysis_iterator = self._corrector.get_analysis()
-					for message in analysis_iterator:
-						Console.print_message(f"{message} ")
+					# Console.make_new_line()
+					# Console.print_message("\033[92m \033[4mANALYSIS\033[0m\n")
+					# analysis_iterator = self._corrector.get_analysis()
+					# for message in analysis_iterator:
+					#		Console.print_message(f"{message} ")
 
 					Console.make_new_line()
 					Console.print_message("\033[93m \033[4mTRUE RESPONSES\033[0m\n")

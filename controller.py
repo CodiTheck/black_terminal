@@ -14,11 +14,38 @@ class Corrector:
 		self._responses = []
 		self._analyser = SementicAnalyser()
 
-	def _find(self) -> Response:
-		...
+	def _find(self, search: Response, responses: List[Response]) -> Response:
+		""" Function to find the corresponding response
+				in a list of responses
+		"""
+		max_score = 0
+		curr_score = 0
+		response_found = None
+
+		for response in responses:
+			for char in search.content:
+				try:
+					response.content.index(char)
+					curr_score += 1
+				except:
+					pass
+
+			if curr_score > max_score:
+				max_score = curr_score
+				response_found = response
+
+			curr_score = 0
+
+		return response_found
 
 	def _verify(self, proposition: Response, response: Response) -> float:
 		""" Function of response verification """
+		if not response.content:
+			return 1.0
+
+		if not proposition.content:
+			return 0.0
+
 		total_score = 0.0
 		tokenizer = StringTokenizer()
 		pred_tokens = tokenizer.tokenize(proposition.content)
@@ -28,18 +55,22 @@ class Corrector:
 		pred_tokens = encoder.tokenize(pred_tokens)
 		token_infos = encoder.get_token_infos()
 
-		propos = []
-		for token, score in token_infos:
-			total_score += score
-			propos.append(token)
+		# propos = []
+		# for token, score in token_infos:
+		#		total_score += score
+		#		propos.append(token)
 
-		total_score /= len(token_infos)
+		# n_infos = len(token_infos)
+		# if n_infos > 0:
+		#		total_score /= n_infos
 
 		score = self._analyser.get_analysis(proposition.content, response.content)
-		total_score = (total_score + score) / 2
+		total_score = (total_score + score)
 
-		self._propositions.append(propos)
-		self._responses.append(targ_tokens)
+		# self._propositions.append(propos)
+		# self._responses.append(targ_tokens)
+		# print(propos)
+		# print(targ_tokens)
 		return total_score
 
 	def correct(self, quiz: Quiz):
@@ -64,16 +95,26 @@ class Corrector:
 		output = ''
 		analyzer = TokenAnalyzer()
 
-		for pred, targ in zip(self._propositions, self._responses):
-			res = analyzer.get_analysis(pred, targ)
-			for index, char in enumerate(pred):
-				if res[index]:
-					output += (f"\033[92m{char}\033[0m")
-				else:
-					output += (f"\033[91m{char}\033[0m")
+		for preds, targs in zip(self._propositions, self._responses):
+			output = '* '
+			if not preds:
+				output += (f"\033[95mNo response given!\033[0m\n")
+				yield output
+				continue
 
-			yield output
-			output = ''
+			for pred, targ in zip(preds, targs):
+
+				res = analyzer.get_analysis(pred, targ)
+				for index, char in enumerate(pred):
+					if res[index]:
+						output += (f"\033[92m{char}\033[0m")
+					else:
+						output += (f"\033[91m{char}\033[0m")
+
+				yield output
+				output = ''
+
+			output = '\n'
 
 
 	def reset(self):
